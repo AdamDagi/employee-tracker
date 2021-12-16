@@ -88,6 +88,27 @@ const addEmployee = [
     }
 ];
 
+const updateEmpRole = [
+    {
+        type: "input",
+        name: "updateRoleTitle",
+        message: "Please enter title?",
+        inputs: ""
+    },
+    {
+        type: "input",
+        name: "updateRoleSalary",
+        message: "Please enter salary?",
+        inputs: ""
+    },
+    {
+        type: "input",
+        name: "updateRoleDeaprtmentId",
+        message: "Please enter department id?",
+        inputs: ""
+    }
+];
+
 const addTypeOfSpecialist = async (inputs = []) => {
     let mergeAnswers;
     const answersDatabaseQuestions = await inquirer.prompt(databaseQuestions);
@@ -190,7 +211,29 @@ const addTypeOfSpecialist = async (inputs = []) => {
             }
         });
     }
+    if (answersDatabaseQuestions.questionOptions == "Update an employee role") {
+        const data = await inquirer.prompt(updateEmpRole);
+        const updateRoleTitle = data.updateRoleTitle;
+        const updateRoleSalary = data.updateRoleSalary;
+        const updateRoleDeaprtmentId = data.updateRoleDeaprtmentId;
+        db.query(`INSERT INTO Role(title) VALUES("${updateRoleTitle}")`, (err, result) => {
+            if (err) {
+              console.log(err);
+            }
+        });
+        db.query(`INSERT INTO Role(salary) VALUES("${updateRoleSalary}")`, (err, result) => {
+            if (err) {
+              console.log(err);
+            }
+        });
+        db.query(`INSERT INTO Role(department_id) VALUES("${updateRoleDeaprtmentId}")`, (err, result) => {
+            if (err) {
+              console.log(err);
+            }
+        });
+    }
 };
+
 async function start() {
     const answersWorkers = await addTypeOfSpecialist();
 };
