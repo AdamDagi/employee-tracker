@@ -61,6 +61,33 @@ const addRole = [
     }
 ];
 
+const addEmployee = [
+    {
+        type: "input",
+        name: "empFirstName",
+        message: "Please enter title?",
+        inputs: ""
+    },
+    {
+        type: "input",
+        name: "empLastName",
+        message: "Please enter salary?",
+        inputs: ""
+    },
+    {
+        type: "input",
+        name: "empRoleId",
+        message: "Please enter department id?",
+        inputs: ""
+    },
+    {
+        type: "input",
+        name: "empManagerId",
+        message: "Please enter department id?",
+        inputs: ""
+    }
+];
+
 const addTypeOfSpecialist = async (inputs = []) => {
     let mergeAnswers;
     const answersDatabaseQuestions = await inquirer.prompt(databaseQuestions);
@@ -131,6 +158,33 @@ const addTypeOfSpecialist = async (inputs = []) => {
             }
         });
         db.query(`INSERT INTO Role(department_id) VALUES("${roleDeaprtmentId}")`, (err, result) => {
+            if (err) {
+              console.log(err);
+            }
+        });
+    }
+    if (answersDatabaseQuestions.questionOptions == "Add an employee") {
+        const data = await inquirer.prompt(addEmployee);
+        const empFirstName = data.empFirstName;
+        const empLastName = data.empLastName;
+        const empRoleId = data.empRoleId;
+        const empManagerId = data.empManagerId;
+        db.query(`INSERT INTO Employee(first_name) VALUES("${empFirstName}")`, (err, result) => {
+            if (err) {
+              console.log(err);
+            }
+        });
+        db.query(`INSERT INTO Employee(last_name) VALUES("${empLastName}")`, (err, result) => {
+            if (err) {
+              console.log(err);
+            }
+        });
+        db.query(`INSERT INTO Employee(role_id) VALUES("${empRoleId}")`, (err, result) => {
+            if (err) {
+              console.log(err);
+            }
+        });
+        db.query(`INSERT INTO Employee(manager_id) VALUES("${empManagerId}")`, (err, result) => {
             if (err) {
               console.log(err);
             }
