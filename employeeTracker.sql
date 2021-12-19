@@ -1,3 +1,5 @@
+USE EmployeeTracker;
+SET FOREIGN_KEY_CHECKS = 1;
 CREATE TABLE Department (    
     id INT (15) PRIMARY KEY,    
     NAME VARCHAR(30)

@@ -180,6 +180,7 @@ const addTypeOfSpecialist = async (inputs = []) => {
     }
     if (answersDatabaseQuestions.questionOptions == "Add an employee") {
         const dataEmployee = await inquirer.prompt(addEmployee);
+        console.log(dataEmployee);
         db.query(`INSERT INTO Employee(id, first_name, last_name, role_id, manager_id) VALUES("${dataEmployee.id}", "${dataEmployee.empFirstName}", "${dataEmployee.empLastName}", "${dataEmployee.empRoleId}", "${dataEmployee.empManagerId}")`, (err, result) => {
             if (err) {
               console.log(err);
@@ -191,51 +192,89 @@ const addTypeOfSpecialist = async (inputs = []) => {
         let namesArray;
         let rolesArray;
         let rolesIdArray = [];
-        db.query(`SELECT first_name FROM Employee`, async (err, result) => {
+        db.query(`SELECT id FROM Department`, async (err, result) => {
             if (err) {
               console.log(err);
             } else {
                 if(result && result.length) {
-                    namesArray = result.map(item => item.first_name);
-                }
-            }
-        });
-        db.query(`SELECT title FROM Role`, async (err, result) => {
-            if (err) {
-              console.log(err);
-            } else {
-                if(result && result.length) {
-                    rolesArray = result.map(item => item.title);
+                    const departmentsId = result.map(item => item.id);
                     const questionUpdateRole = [
                         {
                             type: "list",
-                            name: "selectEmployee",
-                            message: "Which Employee would you like to update?",
-                            choices: namesArray
-                        },
-                        {
-                            type: "list",
-                            name: "selectNewRole",
-                            message: "Which Role you want to add to this Employee?",
-                            choices: rolesArray
+                            name: "selectDepartment",
+                            message: "Choose department for update.",
+                            choices: departmentsId
                         }
                     ];
                     const res = await inquirer.prompt(questionUpdateRole);
-                    db.query(`SELECT id FROM Role WHERE title = "${res.selectNewRole}"`, async (err, result) => {
+                    departmentId = res.selectDepartment;
+                    db.query(`SELECT title, id FROM Role WHERE department_id = "${departmentId}"`, async (err, result) => {
                         if (err) {
-                        console.log(err);
+                          console.log(err);
                         } else {
                             if(result && result.length) {
-                                rolesIdArray = result.map(item => item.id);
-                                db.query(`UPDATE Employee SET role_id = "${rolesIdArray[0]}"  where first_name = "${res.selectEmployee}"`, (err, result) => {
+                                const rolesArray = result.map(item => item.title);
+                                const questionChouseRole = [
+                                    {
+                                        type: "list",
+                                        name: "selectRole",
+                                        message: "Choose type of cpecialist whoom you want to upadte.",
+                                        choices: rolesArray
+                                    }
+                                ];
+                                const res = await inquirer.prompt(questionChouseRole);
+                                const idOfChosenRole = result.find((item) => item.title == res.selectRole).id;
+                                db.query(`SELECT first_name FROM Employee WHERE role_id = "${idOfChosenRole}"`, async (err, result) => {
                                     if (err) {
-                                    console.log(err);
+                                      console.log(err);
+                                    } else {
+                                        if(result && result.length) {
+                                            namesArray = result.map(item => item.first_name);
+                                            db.query(`SELECT title FROM Role WHERE department_id = "${departmentId}"`, async (err, result) => {
+                                                if (err) {
+                                                  console.log(err);
+                                                } else {
+                                                    if(result && result.length) {
+                                                        const choosenRolesArray = result.map(item => item.title);
+                                                        const questionUpdateRole = [
+                                                            {
+                                                                type: "list",
+                                                                name: "selectEmployee",
+                                                                message: "Which Employee would you like to update?",
+                                                                choices: namesArray
+                                                            },
+                                                            {
+                                                                type: "list",
+                                                                name: "selectNewRole",
+                                                                message: "Which Role you want to add to this Employee?",
+                                                                choices: choosenRolesArray
+                                                            }
+                                                        ];
+                                                        const res = await inquirer.prompt(questionUpdateRole);
+                                                        db.query(`SELECT id FROM Role WHERE title = "${res.selectNewRole}" && department_id = "${departmentId}"`, async (err, result) => {
+                                                            if (err) {
+                                                            console.log(err);
+                                                            } else {
+                                                                if(result && result.length) {
+                                                                    rolesIdArray = result.map(item => item.id);
+                                                                    db.query(`UPDATE Employee SET role_id = "${rolesIdArray[0]}"  WHERE first_name = "${res.selectEmployee}"`, (err, result) => {
+                                                                        if (err) {
+                                                                        console.log(err);
+                                                                        }
+                                                                    });
+                                                                }
+                                                            }
+                                                        });
+                                                        return addTypeOfSpecialist();
+                                                    }
+                                                }
+                                            });
+                                        }
                                     }
                                 });
                             }
                         }
                     });
-                    return addTypeOfSpecialist();
                 }
             }
         });
@@ -245,48 +284,68 @@ const addTypeOfSpecialist = async (inputs = []) => {
         let idRoleManager;
         let managersArray;
         let fullMangersArray;
-        db.query(`SELECT id FROM Role WHERE title = "manager"`, async (err, result) => {
+        let departmentId;
+        db.query(`SELECT id FROM Department`, async (err, result) => {
             if (err) {
               console.log(err);
             } else {
                 if(result && result.length) {
-                    idRoleManager = result.map(item => item.id);
-                    db.query(`SELECT first_name FROM Employee WHERE role_id != "${idRoleManager[0]}"`, async (err, result) => {
+                    const departmentsId = result.map(item => item.id);
+                    const questionUpdateManager = [
+                        {
+                            type: "list",
+                            name: "selectDepartment",
+                            message: "Choose department for update.",
+                            choices: departmentsId
+                        }
+                    ];
+                    const res = await inquirer.prompt(questionUpdateManager);
+                    departmentId = res.selectDepartment;
+                    db.query(`SELECT id FROM Role WHERE title = "manager" && department_id = "${departmentId}"`, async (err, result) => {
                         if (err) {
                           console.log(err);
                         } else {
                             if(result && result.length) {
-                                namesArray = result.map(item => item.first_name);
-                                db.query(`SELECT first_name, id FROM Employee WHERE role_id = "${idRoleManager[0]}"`, async (err, result) => {
+                                idRoleManager = result.map(item => item.id);
+                                db.query(`SELECT first_name FROM Employee WHERE role_id != "${idRoleManager[0]}"`, async (err, result) => {
                                     if (err) {
                                       console.log(err);
                                     } else {
                                         if(result && result.length) {
-                                            fullMangersArray = result;
-                                            managersArray = result.map(item => item.first_name);
-                                            const questionUpdateManager = [
-                                                {
-                                                    type: "list",
-                                                    name: "selectEmployee",
-                                                    message: "Which Employee's manger would you like to update?",
-                                                    choices: namesArray
-                                                },
-                                                {
-                                                    type: "list",
-                                                    name: "selectNewManager",
-                                                    message: "Which Manager you want to set to this Employee?",
-                                                    choices: managersArray
-                                                }
-                                            ];
-                                            const res = await inquirer.prompt(questionUpdateManager);
-                                            const newManager = fullMangersArray.find((manager) => manager.first_name = res.selectNewManager);
-                                            console.log(newManager);
-                                            db.query(`UPDATE Employee SET manager_id = "${newManager.id}"  where first_name = "${res.selectEmployee}"`, (err, result) => {
+                                            namesArray = result.map(item => item.first_name);
+                                            db.query(`SELECT first_name, id FROM Employee WHERE role_id = "${idRoleManager[0]}"`, async (err, result) => {
                                                 if (err) {
                                                   console.log(err);
+                                                } else {
+                                                    if(result && result.length) {
+                                                        fullMangersArray = result;
+                                                        managersArray = result.map(item => item.first_name);
+                                                        const questionUpdateManager = [
+                                                            {
+                                                                type: "list",
+                                                                name: "selectEmployee",
+                                                                message: "Which Employee's manger would you like to update?",
+                                                                choices: namesArray
+                                                            },
+                                                            {
+                                                                type: "list",
+                                                                name: "selectNewManager",
+                                                                message: "Which Manager you want to set to this Employee?",
+                                                                choices: managersArray
+                                                            }
+                                                        ];
+                                                        const res = await inquirer.prompt(questionUpdateManager);
+                                                        const newManager = fullMangersArray.find((manager) => manager.first_name = res.selectNewManager);
+                                                        console.log(newManager);
+                                                        db.query(`UPDATE Employee SET manager_id = "${newManager.id}"  where first_name = "${res.selectEmployee}"`, (err, result) => {
+                                                            if (err) {
+                                                              console.log(err);
+                                                            }
+                                                        });
+                                                        return addTypeOfSpecialist();
+                                                    }
                                                 }
                                             });
-                                            return addTypeOfSpecialist();
                                         }
                                     }
                                 });
