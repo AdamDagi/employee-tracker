@@ -23,15 +23,27 @@ const databaseQuestions = [
             "View all roles", 
             "View all employees", 
             "Add a department",
-            "Add a role", 
+            "Add a role",
             "Add an employee", 
-            "Update an employee role"
+            "Update an employee role",
+            "Update employee manager",
+            "View employees by department",
+            "Delete department",
+            "Delete role",
+            "Delete employee",
+            "View the total utilized budget of a department"
         ],
         default: "No more"
     }
 ];
 
 const addDepartment = [
+    {
+        type: "input",
+        name: "id",
+        message: "Please enter Id?",
+        inputs: ""
+    },
     {
         type: "input",
         name: "departmentName",
@@ -41,6 +53,12 @@ const addDepartment = [
 ];
 
 const addRole = [
+    {
+        type: "input",
+        name: "id",
+        message: "Please enter ID?",
+        inputs: ""
+    },
     {
         type: "input",
         name: "roleTitle",
@@ -55,8 +73,8 @@ const addRole = [
     },
     {
         type: "input",
-        name: "roleDeaprtmentId",
-        message: "Please enter department id?",
+        name: "departmentId",
+        message: "Please enter Department ID?",
         inputs: ""
     }
 ];
@@ -64,47 +82,32 @@ const addRole = [
 const addEmployee = [
     {
         type: "input",
+        name: "id",
+        message: "Please enter ID?",
+        inputs: ""
+    },
+    {
+        type: "input",
         name: "empFirstName",
-        message: "Please enter title?",
+        message: "Please enter employee First Name?",
         inputs: ""
     },
     {
         type: "input",
         name: "empLastName",
-        message: "Please enter salary?",
+        message: "Please enter employee Last Name?",
         inputs: ""
     },
     {
         type: "input",
         name: "empRoleId",
-        message: "Please enter department id?",
+        message: "Please enter role id?",
         inputs: ""
     },
     {
         type: "input",
         name: "empManagerId",
-        message: "Please enter department id?",
-        inputs: ""
-    }
-];
-
-const updateEmpRole = [
-    {
-        type: "input",
-        name: "updateRoleTitle",
-        message: "Please enter title?",
-        inputs: ""
-    },
-    {
-        type: "input",
-        name: "updateRoleSalary",
-        message: "Please enter salary?",
-        inputs: ""
-    },
-    {
-        type: "input",
-        name: "updateRoleDeaprtmentId",
-        message: "Please enter department id?",
+        message: "Please enter manager id?",
         inputs: ""
     }
 ];
@@ -123,112 +126,280 @@ const addTypeOfSpecialist = async (inputs = []) => {
             if (err) {
               console.log(err);
             }
-            if (result.length) {
+            if (result && result.length) {
                 printTable(result);
             } else {
                 console.log("Table is Empty");
             }
         });
+        return addTypeOfSpecialist();
     }
     if (answersDatabaseQuestions.questionOptions == "View all roles") {
         db.query(`SELECT * FROM Role`, (err, result) => {
             if (err) {
               console.log(err);
             }
-            if (result.length) {
+            if (result && result.length) {
                 printTable(result);
             } else {
                 console.log("Table is Empty");
             }
         });
+        return addTypeOfSpecialist();
     }
     if (answersDatabaseQuestions.questionOptions == "View all employees") {
         db.query(`SELECT * FROM Employee`, (err, result) => {
             if (err) {
               console.log(err);
             }
-            if (result.length) {
+            if (result && result.length) {
                 printTable(result);
             } else {
                 console.log("Table is Empty");
             }
         });
+        return addTypeOfSpecialist();
     }
     if (answersDatabaseQuestions.questionOptions == "Add a department") {
-        const data = await inquirer.prompt(addDepartment);
-        const name = data.departmentName;
-        db.query(`INSERT INTO Department(name) VALUES("${name}")`, (err, result) => {
+        const dataDepartment = await inquirer.prompt(addDepartment);
+        db.query(`INSERT INTO Department(id, name) VALUES("${dataDepartment.id}", "${dataDepartment.departmentName}")`, (err, result) => {
             if (err) {
               console.log(err);
             }
         });
+        return addTypeOfSpecialist();
     }
     if (answersDatabaseQuestions.questionOptions == "Add a role") {
-        const data = await inquirer.prompt(addRole);
-        const roleTitle = data.roleTitle;
-        const roleSalary = data.roleSalary;
-        const roleDeaprtmentId = data.roleDeaprtmentId;
-        db.query(`INSERT INTO Role(title) VALUES("${roleTitle}")`, (err, result) => {
+        const dataRole = await inquirer.prompt(addRole);
+        db.query(`INSERT INTO Role(id, title, salary, department_id) VALUES("${dataRole.id}", "${dataRole.roleTitle}", "${dataRole.roleSalary}" , "${dataRole.departmentId}")`, (err, result) => {
             if (err) {
               console.log(err);
             }
         });
-        db.query(`INSERT INTO Role(salary) VALUES("${roleSalary}")`, (err, result) => {
-            if (err) {
-              console.log(err);
-            }
-        });
-        db.query(`INSERT INTO Role(department_id) VALUES("${roleDeaprtmentId}")`, (err, result) => {
-            if (err) {
-              console.log(err);
-            }
-        });
+        return addTypeOfSpecialist();
     }
     if (answersDatabaseQuestions.questionOptions == "Add an employee") {
-        const data = await inquirer.prompt(addEmployee);
-        const empFirstName = data.empFirstName;
-        const empLastName = data.empLastName;
-        const empRoleId = data.empRoleId;
-        const empManagerId = data.empManagerId;
-        db.query(`INSERT INTO Employee(first_name) VALUES("${empFirstName}")`, (err, result) => {
+        const dataEmployee = await inquirer.prompt(addEmployee);
+        db.query(`INSERT INTO Employee(id, first_name, last_name, role_id, manager_id) VALUES("${dataEmployee.id}", "${dataEmployee.empFirstName}", "${dataEmployee.empLastName}", "${dataEmployee.empRoleId}", "${dataEmployee.empManagerId}")`, (err, result) => {
             if (err) {
               console.log(err);
             }
         });
-        db.query(`INSERT INTO Employee(last_name) VALUES("${empLastName}")`, (err, result) => {
+        return addTypeOfSpecialist();
+    }
+    if (answersDatabaseQuestions.questionOptions == "Update an employee role") {
+        let namesArray;
+        let rolesArray;
+        let rolesIdArray = [];
+        db.query(`SELECT first_name FROM Employee`, async (err, result) => {
             if (err) {
               console.log(err);
+            } else {
+                if(result && result.length) {
+                    namesArray = result.map(item => item.first_name);
+                }
             }
         });
-        db.query(`INSERT INTO Employee(role_id) VALUES("${empRoleId}")`, (err, result) => {
+        db.query(`SELECT title FROM Role`, async (err, result) => {
             if (err) {
               console.log(err);
-            }
-        });
-        db.query(`INSERT INTO Employee(manager_id) VALUES("${empManagerId}")`, (err, result) => {
-            if (err) {
-              console.log(err);
+            } else {
+                if(result && result.length) {
+                    rolesArray = result.map(item => item.title);
+                    const questionUpdateRole = [
+                        {
+                            type: "list",
+                            name: "selectEmployee",
+                            message: "Which Employee would you like to update?",
+                            choices: namesArray
+                        },
+                        {
+                            type: "list",
+                            name: "selectNewRole",
+                            message: "Which Role you want to add to this Employee?",
+                            choices: rolesArray
+                        }
+                    ];
+                    const res = await inquirer.prompt(questionUpdateRole);
+                    db.query(`SELECT id FROM Role WHERE title = "${res.selectNewRole}"`, async (err, result) => {
+                        if (err) {
+                        console.log(err);
+                        } else {
+                            if(result && result.length) {
+                                rolesIdArray = result.map(item => item.id);
+                                db.query(`UPDATE Employee SET role_id = "${rolesIdArray[0]}"  where first_name = "${res.selectEmployee}"`, (err, result) => {
+                                    if (err) {
+                                    console.log(err);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                    return addTypeOfSpecialist();
+                }
             }
         });
     }
-    if (answersDatabaseQuestions.questionOptions == "Update an employee role") {
-        const data = await inquirer.prompt(updateEmpRole);
-        const updateRoleTitle = data.updateRoleTitle;
-        const updateRoleSalary = data.updateRoleSalary;
-        const updateRoleDeaprtmentId = data.updateRoleDeaprtmentId;
-        db.query(`INSERT INTO Role(title) VALUES("${updateRoleTitle}")`, (err, result) => {
+    if (answersDatabaseQuestions.questionOptions == "Update employee manager") {
+        let namesArray;
+        let idRoleManager;
+        let managersArray;
+        let fullMangersArray;
+        db.query(`SELECT id FROM Role WHERE title = "manager"`, async (err, result) => {
             if (err) {
               console.log(err);
+            } else {
+                if(result && result.length) {
+                    idRoleManager = result.map(item => item.id);
+                    db.query(`SELECT first_name FROM Employee WHERE role_id != "${idRoleManager[0]}"`, async (err, result) => {
+                        if (err) {
+                          console.log(err);
+                        } else {
+                            if(result && result.length) {
+                                namesArray = result.map(item => item.first_name);
+                                db.query(`SELECT first_name, id FROM Employee WHERE role_id = "${idRoleManager[0]}"`, async (err, result) => {
+                                    if (err) {
+                                      console.log(err);
+                                    } else {
+                                        if(result && result.length) {
+                                            fullMangersArray = result;
+                                            managersArray = result.map(item => item.first_name);
+                                            const questionUpdateManager = [
+                                                {
+                                                    type: "list",
+                                                    name: "selectEmployee",
+                                                    message: "Which Employee's manger would you like to update?",
+                                                    choices: namesArray
+                                                },
+                                                {
+                                                    type: "list",
+                                                    name: "selectNewManager",
+                                                    message: "Which Manager you want to set to this Employee?",
+                                                    choices: managersArray
+                                                }
+                                            ];
+                                            const res = await inquirer.prompt(questionUpdateManager);
+                                            const newManager = fullMangersArray.find((manager) => manager.first_name = res.selectNewManager);
+                                            console.log(newManager);
+                                            db.query(`UPDATE Employee SET manager_id = "${newManager.id}"  where first_name = "${res.selectEmployee}"`, (err, result) => {
+                                                if (err) {
+                                                  console.log(err);
+                                                }
+                                            });
+                                            return addTypeOfSpecialist();
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
             }
         });
-        db.query(`INSERT INTO Role(salary) VALUES("${updateRoleSalary}")`, (err, result) => {
+    }
+    if (answersDatabaseQuestions.questionOptions == "View employees by department") {
+        function viewEmployeesByDepartment() {
+            db.findAllDepartments()
+            .then(([rows]) => {
+                let departments = rows;
+                const departmentChoices = departments.map(({ id, name}) => ({
+                    name: name,
+                    value: id
+                }));
+
+                prompt([
+                    {
+                        type: "list",
+                        name: "departmentId",
+                        message: "Which department would you like to see employees for?",
+                        choices: departmentChoices
+                    }
+                ])
+                .then(res => db.findAllEmployeesByDepartments(res.departmentId))
+                .then(([rows]) => {
+                    let employees = rows;
+                    const employeesByDepartment = employees.map(({ id, name}) => ({
+                        name: name,
+                        value: id
+                    }))
+                })
+            });
+        };    
+        return addTypeOfSpecialist();
+    }
+    if (answersDatabaseQuestions.questionOptions == "Delete department") {
+        db.query(`SELECT name FROM Department`, async (err, result) => {
             if (err) {
               console.log(err);
+            } else {
+                const namesArray = Object.values(result);
+                if(namesArray && namesArray.length) {
+                    const selectDeliteDepartment = [{
+                        type: "list",
+                        name: "departmentName",
+                        message: "Which department would you like to delete?",
+                        choices: namesArray
+                    }];
+                    const res = await inquirer.prompt(selectDeliteDepartment);
+                    const deleteName = res.departmentName;
+                    db.query(`DELETE FROM Department WHERE name = ("${deleteName}")`, (err, result) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                    });
+                }    
+                return addTypeOfSpecialist();
             }
         });
-        db.query(`INSERT INTO Role(department_id) VALUES("${updateRoleDeaprtmentId}")`, (err, result) => {
+    }
+    if (answersDatabaseQuestions.questionOptions == "Delete role") {
+        db.query(`SELECT title FROM Role`, async (err, result) => {
             if (err) {
               console.log(err);
+            } else {
+                if(result && result.length) {
+                    const namesArray = result.map(item => item.title);
+                    console.log(namesArray);
+                    const selectDeliteRole = [{
+                        type: "list",
+                        name: "roleTitle",
+                        message: "Which role would you like to delete?",
+                        choices: namesArray
+                    }];
+                    const res = await inquirer.prompt(selectDeliteRole);
+                    const deleteTitle = res.roleTitle;
+                    db.query(`DELETE FROM Role WHERE title = ("${deleteTitle}")`, (err, result) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                    });
+                }
+                return addTypeOfSpecialist();
+            }
+        });
+    }
+    if (answersDatabaseQuestions.questionOptions == "Delete employee") {
+        db.query(`SELECT first_name FROM Employee`, async (err, result) => {
+            if (err) {
+              console.log(err);
+            } else {
+                if(result && result.length) {
+                    const namesArray = result.map(item => item.first_name);
+                    const selectDeliteEmployee = [{
+                        type: "list",
+                        name: "employeeFirstName",
+                        message: "Which Employee would you like to delite?",
+                        choices: namesArray
+                    }];
+                    const res = await inquirer.prompt(selectDeliteEmployee);
+                    const deleteFirstName = res.employeeFirstName;
+                    db.query(`DELETE FROM Employee WHERE first_name = ("${deleteFirstName}")`, (err, result) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                    });
+                }
+                return addTypeOfSpecialist();
             }
         });
     }
