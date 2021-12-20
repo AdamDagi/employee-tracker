@@ -153,7 +153,44 @@ const addTypeOfSpecialist = async (inputs = []) => {
               console.log(err);
             }
             if (result && result.length) {
-                printTable(result);
+                const allEmployeeData = result;
+                db.query(`SELECT * FROM Role`, (err, result) => {
+                    if (err) {
+                      console.log(err);
+                    }
+                    if (result && result.length) {
+                        const allRoleData = result;
+                        db.query(`SELECT * FROM Department`, (err, result) => {
+                            if (err) {
+                              console.log(err);
+                            }
+                            if (result && result.length) {
+                                const allDepartmentData = result;
+                                allEmployeeData.forEach((employee, index) => {
+                                    const role = allRoleData.find((role) => role.id == employee.role_id);
+                                    employee.jobTitle = role.title;
+                                    employee.salary = role.salary;
+                                    const findDepa = allDepartmentData.find((depa) => depa.id == role.department_id);
+                                    employee.department = findDepa.NAME;
+                                    const employesManager = allEmployeeData.find((empl) => empl.id == employee.manager_id);
+                                    if (employesManager) {
+                                        employee.manager = `${employesManager.first_name} ${employesManager.last_name}`;
+                                    } else {
+                                        employee.manager = `null`;
+                                    }
+                                    delete employee.role_id;
+                                    delete employee.manager_id;
+                                })
+                                printTable(allEmployeeData);
+                                return addTypeOfSpecialist();
+                            } else {
+                                console.log("Table is Empty");
+                            }
+                        });
+                    } else {
+                        console.log("Table is Empty");
+                    }
+                });
             } else {
                 console.log("Table is Empty");
             }
@@ -190,7 +227,6 @@ const addTypeOfSpecialist = async (inputs = []) => {
     }
     if (answersDatabaseQuestions.questionOptions == "Update an employee role") {
         let namesArray;
-        let rolesArray;
         let rolesIdArray = [];
         db.query(`SELECT id FROM Department`, async (err, result) => {
             if (err) {
@@ -357,34 +393,49 @@ const addTypeOfSpecialist = async (inputs = []) => {
         });
     }
     if (answersDatabaseQuestions.questionOptions == "View employees by department") {
-        function viewEmployeesByDepartment() {
-            db.findAllDepartments()
-            .then(([rows]) => {
-                let departments = rows;
-                const departmentChoices = departments.map(({ id, name}) => ({
-                    name: name,
-                    value: id
-                }));
-
-                prompt([
-                    {
-                        type: "list",
-                        name: "departmentId",
-                        message: "Which department would you like to see employees for?",
-                        choices: departmentChoices
-                    }
-                ])
-                .then(res => db.findAllEmployeesByDepartments(res.departmentId))
-                .then(([rows]) => {
-                    let employees = rows;
-                    const employeesByDepartment = employees.map(({ id, name}) => ({
-                        name: name,
-                        value: id
-                    }))
-                })
-            });
-        };    
-        return addTypeOfSpecialist();
+        db.query(`SELECT id, name FROM Department`, async (err, result) => {
+            if (err) {
+              console.log(err);
+            } else {
+                if(result && result.length) {
+                    const departmentsName = result.map(item => item.name);
+                    const questionUpdateRole = [
+                        {
+                            type: "list",
+                            name: "selectDepartment",
+                            message: "Wich Department's Employes you want to view?",
+                            choices: departmentsName
+                        }
+                    ];
+                    const res = await inquirer.prompt(questionUpdateRole);
+                    departmentId = result.find((item) => item.name == res.selectDepartment).id;
+                    db.query(`SELECT title, id FROM Role WHERE department_id = "${departmentId}"`, async (err, result) => {
+                        if (err) {
+                          console.log(err);
+                        } else {
+                            if(result && result.length) {
+                                const allEpmloyeeArray = [];
+                                const unicRolesId = result;
+                                let allEmployesName;
+                                result.forEach((item, index) => {
+                                    db.query(`SELECT first_name, last_name FROM Employee WHERE role_id = "${item.id}"`, async (err, result) => {
+                                        if (err) {
+                                          console.log(err);
+                                        } else {
+                                            allEmployesName = allEpmloyeeArray.concat(result);
+                                            if (index == unicRolesId.length - 1) {
+                                                printTable(allEmployesName);
+                                                return addTypeOfSpecialist();
+                                            }
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
     if (answersDatabaseQuestions.questionOptions == "Delete department") {
         db.query(`SELECT name FROM Department`, async (err, result) => {
@@ -461,6 +512,56 @@ const addTypeOfSpecialist = async (inputs = []) => {
                 return addTypeOfSpecialist();
             }
         });
+    }
+    if (answersDatabaseQuestions.questionOptions == "View the total utilized budget of a department") {
+        db.query(`SELECT * FROM Employee`, (err, result) => {
+            if (err) {
+              console.log(err);
+            }
+            if (result && result.length) {
+                const allEmployeeData = result;
+                db.query(`SELECT * FROM Role`, (err, result) => {
+                    if (err) {
+                      console.log(err);
+                    }
+                    if (result && result.length) {
+                        const allRoleData = result;
+                        db.query(`SELECT * FROM Department`, (err, result) => {
+                            if (err) {
+                              console.log(err);
+                            }
+                            if (result && result.length) {
+                                const allDepartmentData = result;
+                                // allEmployeeData.forEach((employee, index) => {
+                                //     const role = allRoleData.find((role) => role.id == employee.role_id);
+                                //     employee.jobTitle = role.title;
+                                //     employee.salary = role.salary;
+                                //     const findDepa = allDepartmentData.find((depa) => depa.id == role.department_id);
+                                //     employee.department = findDepa.NAME;
+                                //     const employesManager = allEmployeeData.find((empl) => empl.id == employee.manager_id);
+                                //     if (employesManager) {
+                                //         employee.manager = `${employesManager.first_name} ${employesManager.last_name}`;
+                                //     } else {
+                                //         employee.manager = `null`;
+                                //     }
+                                //     delete employee.role_id;
+                                //     delete employee.manager_id;
+                                // })
+                                printTable(allEmployeeData);
+                                return addTypeOfSpecialist();
+                            } else {
+                                console.log("Table is Empty");
+                            }
+                        });
+                    } else {
+                        console.log("Table is Empty");
+                    }
+                });
+            } else {
+                console.log("Table is Empty");
+            }
+        });
+        return addTypeOfSpecialist();
     }
 };
 
