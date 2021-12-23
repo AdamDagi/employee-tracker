@@ -114,7 +114,6 @@ const addEmployee = [
 ];
 
 const addTypeOfSpecialist = async (inputs = []) => {
-    let mergeAnswers;
     const answersDatabaseQuestions = await inquirer.prompt(databaseQuestions);
     if (answersDatabaseQuestions.questionOptions == "No more") {
         if (inputs.length > 0) {
@@ -162,7 +161,6 @@ const addTypeOfSpecialist = async (inputs = []) => {
             } else {
                 console.log("Table is Empty");
             }
-            return addTypeOfSpecialist();
         });
     }
     if (answersDatabaseQuestions.questionOptions == "View all employees") {
@@ -204,17 +202,14 @@ const addTypeOfSpecialist = async (inputs = []) => {
                             } else {
                                 console.log("Table is Empty");
                             }
-                            return addTypeOfSpecialist();
                         });
                     } else {
                         console.log("Table is Empty");
                     }
-                    return addTypeOfSpecialist();
                 });
             } else {
                 console.log("Table is Empty");
             }
-            return addTypeOfSpecialist();
         });
     }
     if (answersDatabaseQuestions.questionOptions == "Add a department") {
@@ -232,26 +227,26 @@ const addTypeOfSpecialist = async (inputs = []) => {
             if (err) {
               console.log(err);
             }
+            return addTypeOfSpecialist();
         });
-        return addTypeOfSpecialist();
     }
     if (answersDatabaseQuestions.questionOptions == "Add an employee") {
         const dataEmployee = await inquirer.prompt(addEmployee);
-        console.log(dataEmployee);
-        if (dataEmployee.manager_id) {
+        if (dataEmployee.empManagerId) {
             db.query(`INSERT INTO Employee(id, first_name, last_name, role_id, manager_id) VALUES("${dataEmployee.id}", "${dataEmployee.empFirstName}", "${dataEmployee.empLastName}", "${dataEmployee.empRoleId}", "${dataEmployee.empManagerId}")`, (err, result) => {
                 if (err) {
                   console.log(err);
                 }
+                return addTypeOfSpecialist();
             });
         } else {
             db.query(`INSERT INTO Employee(id, first_name, last_name, role_id) VALUES("${dataEmployee.id}", "${dataEmployee.empFirstName}", "${dataEmployee.empLastName}", "${dataEmployee.empRoleId}")`, (err, result) => {
                 if (err) {
                   console.log(err);
                 }
+                return addTypeOfSpecialist();
             });
         }
-        return addTypeOfSpecialist();
     }
     if (answersDatabaseQuestions.questionOptions == "Update an employee role") {
         let namesArray;
@@ -325,11 +320,11 @@ const addTypeOfSpecialist = async (inputs = []) => {
                                                                         if (err) {
                                                                         console.log(err);
                                                                         }
+                                                                        return addTypeOfSpecialist();
                                                                     });
                                                                 }
                                                             }
                                                         });
-                                                        return addTypeOfSpecialist();
                                                     }
                                                 }
                                             });
@@ -371,7 +366,6 @@ const addTypeOfSpecialist = async (inputs = []) => {
                         } else {
                             if(result && result.length) {
                                 idRoleManager = result.map(item => item.id);
-                                console.log(idRoleManager)
                                 db.query(`SELECT title, id FROM Role WHERE department_id = "${departmentId}" && title != "manager"`, async (err, result) => {
                                     if (err) {
                                       console.log(err);
@@ -416,13 +410,13 @@ const addTypeOfSpecialist = async (inputs = []) => {
                                                                         }
                                                                     ];
                                                                     const res = await inquirer.prompt(questionUpdateManager);
-                                                                    const newManager = fullMangersArray.find((manager) => manager.first_name = res.selectNewManager);
+                                                                    const newManager = fullMangersArray.find((manager) => manager.first_name == res.selectNewManager);
                                                                     db.query(`UPDATE Employee SET manager_id = "${newManager.id}"  where first_name = "${res.selectEmployee}"`, (err, result) => {
                                                                         if (err) {
                                                                         console.log(err);
                                                                         }
+                                                                        return addTypeOfSpecialist();
                                                                     });
-                                                                    return addTypeOfSpecialist();
                                                                 }
                                                             }
                                                         });
@@ -455,23 +449,22 @@ const addTypeOfSpecialist = async (inputs = []) => {
                         }
                     ];
                     const res = await inquirer.prompt(questionUpdateRole);
-                    departmentId = result.find((item) => item.name == res.selectDepartment).id;
+                    const departmentId = result.find((item) => item.name == res.selectDepartment).id;
                     db.query(`SELECT title, id FROM Role WHERE department_id = "${departmentId}"`, async (err, result) => {
                         if (err) {
                           console.log(err);
                         } else {
                             if(result && result.length) {
-                                const allEpmloyeeArray = [];
+                                let allEpmloyeeArray = [];
                                 const unicRolesId = result;
-                                let allEmployesName;
                                 result.forEach((item, index) => {
                                     db.query(`SELECT first_name, last_name FROM Employee WHERE role_id = "${item.id}"`, async (err, result) => {
                                         if (err) {
                                           console.log(err);
                                         } else {
-                                            allEmployesName = allEpmloyeeArray.concat(result);
+                                            allEpmloyeeArray = [].concat(allEpmloyeeArray, result);
                                             if (index == unicRolesId.length - 1) {
-                                                printTable(allEmployesName);
+                                                printTable(allEpmloyeeArray);
                                                 return addTypeOfSpecialist();
                                             }
                                         }
@@ -523,7 +516,7 @@ const addTypeOfSpecialist = async (inputs = []) => {
                                                 }
                                             ];
                                             const res = await inquirer.prompt(questionUpdateManager);
-                                            const newManager = fullMangersArray.find((manager) => manager.first_name = res.selectNewManager);
+                                            const newManager = fullMangersArray.find((manager) => manager.first_name == res.selectNewManager);
                                             db.query(`SELECT * FROM Employee`, async (err, result) => {
                                                 if (err) {
                                                   console.log(err);
@@ -533,7 +526,7 @@ const addTypeOfSpecialist = async (inputs = []) => {
                                                     if (employeeOfManager) {
                                                         employeeOfManager.forEach((item,index)=> {
                                                             data[index] = {};
-                                                            data[index].index = index;
+                                                            data[index].number = index + 1;
                                                             data[index][`${newManager.first_name} ${newManager.last_name}`] = `${item.first_name} ${item.last_name}`; 
                                                         });
                                                         printTable(data);
@@ -543,7 +536,6 @@ const addTypeOfSpecialist = async (inputs = []) => {
                                                     return addTypeOfSpecialist();
                                                 }
                                             });
-                                            return addTypeOfSpecialist();
                                         }
                                     }
                                 });
@@ -574,9 +566,9 @@ const addTypeOfSpecialist = async (inputs = []) => {
                         if (err) {
                             console.log(err);
                         }
+                        return addTypeOfSpecialist();
                     });
-                }    
-                return addTypeOfSpecialist();
+                }
             }
         });
     }
@@ -600,9 +592,9 @@ const addTypeOfSpecialist = async (inputs = []) => {
                         if (err) {
                             console.log(err);
                         }
+                        return addTypeOfSpecialist();
                     });
                 }
-                return addTypeOfSpecialist();
             }
         });
     }
@@ -625,64 +617,82 @@ const addTypeOfSpecialist = async (inputs = []) => {
                         if (err) {
                             console.log(err);
                         }
+                        return addTypeOfSpecialist();
                     });
                 }
-                return addTypeOfSpecialist();
             }
         });
     }
     if (answersDatabaseQuestions.questionOptions == "View the total utilized budget of a department") {
-        db.query(`SELECT * FROM Employee`, (err, result) => {
+        db.query(`SELECT id, name FROM Department`, async (err, result) => {
             if (err) {
               console.log(err);
-            }
-            if (result && result.length) {
-                const allEmployeeData = result;
-                db.query(`SELECT * FROM Role`, (err, result) => {
-                    if (err) {
-                      console.log(err);
-                    }
-                    if (result && result.length) {
-                        const allRoleData = result;
-                        db.query(`SELECT * FROM Department`, (err, result) => {
-                            if (err) {
-                              console.log(err);
-                            }
-                            if (result && result.length) {
-                                const allDepartmentData = result;
-                                let budgetSummary = 0;
-                                allEmployeeData.forEach((employee, index) => {
-                                    const role = allRoleData.find((role) => role.id == employee.role_id);
-                                    employee.jobTitle = role.title;
-                                    employee.salary = role.salary;
-                                    const findDepa = allDepartmentData.find((depa) => depa.id == role.department_id);
-                                    employee.department = findDepa.NAME;
-                                    const employesManager = allEmployeeData.find((empl) => empl.id == employee.manager_id);
-                                    if (employesManager) {
-                                        employee.manager = `${employesManager.first_name} ${employesManager.last_name}`;
-                                    } else {
-                                        employee.manager = `null`;
-                                    }
-                                    budgetSummary = budgetSummary + Number(employee.salary);
-                                    delete employee.role_id;
-                                    delete employee.manager_id;
-                                })
-                                printTable(allEmployeeData);
-                                console.log(`The total Sallery Budget of department:  ${budgetSummary}`);
-                                return addTypeOfSpecialist();
-                            } else {
-                                console.log("Table is Empty");
-                            }
-                        });
-                    } else {
-                        console.log("Table is Empty");
-                    }
-                });
             } else {
-                console.log("Table is Empty");
+                if(result && result.length) {
+                    const departmentsName = result.map(item => item.name);
+                    const questionUpdateRole = [
+                        {
+                            type: "list",
+                            name: "selectDepartmentName",
+                            message: "Wich Department's Employes you want to view?",
+                            choices: departmentsName
+                        }
+                    ];
+                    const res = await inquirer.prompt(questionUpdateRole);
+                    const departmentId = result.find((item) => item.name == res.selectDepartmentName).id;
+                    var selectDepartment = result.find(item => item.id == departmentId);
+                    db.query(`SELECT * FROM Role WHERE department_id = "${departmentId}"`, async (err, result) => {
+                        if (err) {
+                          console.log(err);
+                        } else {
+                            if(result && result.length) {
+                                var allRoleData = result;
+                                db.query(`SELECT * FROM Employee`, async (err, result) => {
+                                    if (err) {
+                                      console.log(err);
+                                    } else {
+                                        const allEmployee = result;
+                                        let budgetSummary = 0;
+                                        allRoleData.forEach((item, index) => {
+                                            db.query(`SELECT * FROM Employee WHERE role_id = "${item.id}"`, async (err, result) => {
+                                                if (err) {
+                                                console.log(err);
+                                                } else {
+                                                    const employes = result;
+                                                    if (employes) {
+                                                        employes.forEach((employee, index) => {
+                                                            const role = allRoleData.find((role) => role.id == employee.role_id);
+                                                            employee.jobTitle = role?.title;
+                                                            employee.salary = role?.salary;
+                                                            const findDepa = selectDepartment;
+                                                            employee.department = findDepa.name;
+                                                            const employesManager = allEmployee.find((empl) => empl.id == employee.manager_id);
+                                                            if (employesManager) {
+                                                                employee.manager = `${employesManager.first_name} ${employesManager.last_name}`;
+                                                            } else {
+                                                                employee.manager = `null`;
+                                                            }
+                                                            budgetSummary = budgetSummary + Number(employee.salary);
+                                                            delete employee.role_id;
+                                                            delete employee.manager_id;
+                                                        });
+                                                        printTable(employes);
+                                                        if (index == (allRoleData.length - 1)) {
+                                                            console.log(`The total Sallery Budget of department:  ${budgetSummary}`);
+                                                            return addTypeOfSpecialist();
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        });
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
             }
         });
-        return addTypeOfSpecialist();
     }
 };
 
